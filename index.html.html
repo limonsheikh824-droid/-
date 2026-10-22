@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>শপ ঘর - Online Shopping App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f4f6; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .animate-cart { animation: pulse-subtle 2s infinite; }
+    </style>
+</head>
+<body class="bg-gray-100 pb-20 max-w-md mx-auto relative min-h-screen shadow-2xl">
+
+    <!-- Top Header -->
+    <header class="bg-gradient-to-r from-orange-600 to-amber-500 text-white p-3.5 sticky top-0 z-50 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-store text-xl"></i>
+            <h1 class="text-lg font-bold">শপ ঘর 🛒</h1>
+        </div>
+        <button onclick="openCart()" class="animate-cart relative bg-white text-orange-600 px-3 py-1.5 rounded-full font-bold shadow-lg flex items-center space-x-1 border-2 border-orange-200">
+            <i class="fa-solid fa-cart-shopping text-base"></i>
+            <span class="text-xs">কার্ট</span>
+            <span id="cartCount" class="bg-red-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold ml-1">0</span>
+        </button>
+    </header>
+
+    <!-- Search Bar -->
+    <div class="p-3 bg-white shadow-sm sticky top-14 z-40">
+        <div class="relative">
+            <input type="text" id="searchInput" oninput="filterProducts()" placeholder="পণ্য খুঁজুন..." class="w-full bg-gray-100 text-sm py-2 pl-10 pr-4 rounded-full border border-gray-300 focus:outline-none focus:border-orange-500">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-gray-400"></i>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="p-3" id="mainTab">
+        <!-- Main Categories -->
+        <section class="mb-3">
+            <h2 class="text-xs font-bold text-gray-700 mb-1.5">মূল ক্যাটাগরি</h2>
+            <div class="flex space-x-2 overflow-x-auto hide-scrollbar pb-1" id="mainCategoryContainer">
+                <button onclick="filterMainCategory('all')" class="main-cat-btn bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shadow">সব</button>
+                <button onclick="filterMainCategory('gents_winter')" class="main-cat-btn bg-white text-gray-700 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border">জেন্টস উইন্টার</button>
+                <button onclick="filterMainCategory('ladies_winter')" class="main-cat-btn bg-white text-gray-700 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border">লেডিস উইন্টার</button>
+                <button onclick="filterMainCategory('baby_collection')" class="main-cat-btn bg-white text-gray-700 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border">বেবি কালেকশন</button>
+                <button onclick="filterMainCategory('gents_clothing')" class="main-cat-btn bg-white text-gray-700 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border">ছেলেদের পোশাক</button>
+                <button onclick="filterMainCategory('ladies_clothing')" class="main-cat-btn bg-white text-gray-700 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border">মেয়েদের কালেকশন</button>
+                <button onclick="filterMainCategory('electronics')" class="main-cat-btn bg-white text-gray-700 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border">ইলেকট্রনিক্স ও গেজেট</button>
+            </div>
+        </section>
+
+        <!-- Sub Categories -->
+        <section class="mb-3" id="subCategorySection">
+            <div class="flex space-x-2 overflow-x-auto hide-scrollbar pb-1" id="subCategoryContainer"></div>
+        </section>
+
+        <!-- Products Grid -->
+        <section>
+            <h2 class="text-sm font-bold text-gray-700 mb-2">পণ্যসমূহ</h2>
+            <div id="productGrid" class="grid grid-cols-2 gap-3"></div>
+        </section>
+    </main>
+
+    <!-- Orders View Tab -->
+    <main class="p-3 hidden" id="ordersTab">
+        <h2 class="text-base font-bold text-gray-800 mb-3"><i class="fa-solid fa-bag-shopping text-orange-500 mr-1"></i> আপনার অর্ডারসমূহ</h2>
+        <div id="userOrdersList" class="space-y-3"></div>
+    </main>
+
+    <!-- Profile View Tab -->
+    <main class="p-3 hidden" id="profileTab">
+        <h2 class="text-base font-bold text-gray-800 mb-3"><i class="fa-solid fa-user-circle text-orange-500 mr-1"></i> আপনার প্রোফাইল</h2>
+        <div class="bg-white p-4 rounded-xl shadow border space-y-3 text-xs">
+            <div><label class="text-gray-500 font-semibold">নাম:</label><input type="text" id="profName" class="w-full border rounded p-2 mt-1"></div>
+            <div><label class="text-gray-500 font-semibold">মোবাইল:</label><input type="text" id="profPhone" class="w-full border rounded p-2 mt-1"></div>
+            <div><label class="text-gray-500 font-semibold">ইমেইল:</label><input type="email" id="profEmail" class="w-full border rounded p-2 mt-1"></div>
+            <div><label class="text-gray-500 font-semibold">ঠিকানা (জেলা, থানা, ইউনিয়ন/গ্রাম):</label><textarea id="profAddress" class="w-full border rounded p-2 mt-1" rows="2"></textarea></div>
+            <button onclick="saveProfile()" class="w-full bg-orange-500 text-white font-bold py-2.5 rounded-lg shadow">তথ্য আপডেট করুন</button>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex justify-around py-2 shadow-lg z-50">
+        <button onclick="switchTab('home')" id="navHome" class="flex flex-col items-center text-orange-500 text-xs font-medium">
+            <i class="fa-solid fa-house text-lg"></i><span>হোম</span>
+        </button>
+        <button onclick="openCart()" class="flex flex-col items-center text-gray-500 text-xs font-medium">
+            <i class="fa-solid fa-cart-shopping text-lg"></i><span>কার্ট</span>
+        </button>
+        <button onclick="switchTab('orders')" id="navOrders" class="flex flex-col items-center text-gray-500 text-xs font-medium">
+            <i class="fa-solid fa-bag-shopping text-lg"></i><span>অর্ডার</span>
+        </button>
+        <button onclick="switchTab('profile')" id="navProfile" class="flex flex-col items-center text-gray-500 text-xs font-medium">
+            <i class="fa-solid fa-user text-lg"></i><span>প্রোফাইল</span>
+        </button>
+    </nav>
+
+    <!-- Product Details Modal (3 Sizes: M, L, XL) -->
+    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-2xl p-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-gray-800 text-sm" id="modalTitle"></h3>
+                <button onclick="closeModal()" class="text-gray-500 font-bold text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <img id="modalMainImg" src="" alt="" class="w-full h-52 object-cover rounded-xl mb-2 border">
+            <div class="grid grid-cols-4 gap-2 mb-3" id="modalThumbnails"></div>
+
+            <p id="modalDesc" class="text-xs text-gray-600 mb-3"></p>
+
+            <!-- 3 Sizes Selector: M, L, XL -->
+            <div id="modalSizeContainer" class="mb-3 hidden">
+                <label class="text-xs font-bold text-gray-700 block mb-1">সাইজ নির্বাচন করুন:</label>
+                <div class="flex space-x-2" id="sizeButtons">
+                    <button onclick="selectSize('M')" class="size-btn px-4 py-1.5 border rounded-lg text-xs font-bold bg-orange-500 text-white shadow-sm">M</button>
+                    <button onclick="selectSize('L')" class="size-btn px-4 py-1.5 border rounded-lg text-xs font-bold bg-white text-black shadow-sm">L</button>
+                    <button onclick="selectSize('XL')" class="size-btn px-4 py-1.5 border rounded-lg text-xs font-bold bg-white text-black shadow-sm">XL</button>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <span id="modalPrice" class="text-lg font-bold text-orange-600">৳0</span>
+                    <span id="modalOldPrice" class="text-xs text-gray-400 line-through ml-2">৳0</span>
+                </div>
+                <span id="modalStock" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">স্টকে আছে</span>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="addModalToCart()" class="flex-1 bg-orange-100 text-orange-600 py-2.5 rounded-xl font-bold text-xs">কার্টে যোগ করুন</button>
+                <button onclick="buyNowModal()" class="flex-1 bg-orange-500 text-white py-2.5 rounded-xl font-bold text-xs">এখনই কিনুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart & Checkout Drawer -->
+    <div id="cartDrawer" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex justify-end">
+        <div class="bg-white w-full max-w-sm h-full flex flex-col justify-between p-4 shadow-2xl border-l-4 border-orange-500">
+            <div>
+                <div class="flex justify-between items-center border-b pb-3 bg-orange-50 p-2 rounded-lg">
+                    <h3 class="font-bold text-orange-600 text-base"><i class="fa-solid fa-bag-shopping mr-2"></i> আপনার শপিং কার্ট</h3>
+                    <button onclick="closeCart()" class="text-gray-500 font-bold text-lg"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="cartItemsList" class="my-3 space-y-3 overflow-y-auto max-h-[35vh]"></div>
+            </div>
+
+            <div class="border-t pt-2 overflow-y-auto">
+                <div class="space-y-1.5 mb-2 text-xs bg-gray-50 p-2 rounded border">
+                    <div class="flex justify-between"><span>সাবটোটাল:</span><span id="cartSubtotal" class="font-bold">৳০</span></div>
+                    <div class="flex justify-between items-center">
+                        <span>ডেলিভারি এলাকা:</span>
+                        <select id="deliveryArea" onchange="updateTotal()" class="border rounded px-1 py-0.5 text-xs bg-white">
+                            <option value="80">ঢাকার ভিতরে (৮০ টাকা)</option>
+                            <option value="120">ঢাকার বাহিরে (১২০ টাকা)</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-between font-bold text-sm text-gray-800 border-t pt-1"><span>মোট পেমেন্ট:</span><span id="cartTotal" class="text-orange-600 font-bold text-base">৳০</span></div>
+                </div>
+
+                <div class="space-y-2 mb-3 text-xs">
+                    <input type="text" id="custName" placeholder="আপনার নাম" class="w-full border rounded p-2">
+                    <input type="text" id="custPhone" placeholder="ফোন নম্বর" class="w-full border rounded p-2">
+                    <textarea id="custAddress" placeholder="ঠিকানা: জেলা,থানা, ইউনিয়ন/গ্রাম" class="w-full border rounded p-2" rows="2"></textarea>
+                    
+                    <div class="bg-orange-50 border border-orange-200 rounded p-2 text-[11px] text-orange-800">
+                        <p class="font-bold mb-1">অগ্রিম ডেলিভারি চার্জ পাঠান:</p>
+                        <p>🔹 বিকাশ: <span class="font-bold">01787312125</span></p>
+                        <p>🔹 নগদ: <span class="font-bold">01956007976</span></p>
+                        <input type="text" id="trxId" placeholder="TrxID দিন" class="w-full border rounded p-1.5 mt-1 bg-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="checkoutWhatsApp()" class="bg-green-600 text-white py-2.5 rounded-xl font-bold text-xs flex items-center justify-center space-x-1">
+                        <i class="fa-brands fa-whatsapp text-base"></i><span>WhatsApp অর্ডার</span>
+                    </button>
+                    <button onclick="checkoutDirect()" class="bg-orange-500 text-white py-2.5 rounded-xl font-bold text-xs">অর্ডার নিশ্চিত করুন</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script>
+        const subCategoriesMap = {
+            'gents_winter': ['হুডি কালেকশন', 'জ্যাকেট', 'সুয়েটার'],
+            'ladies_winter': ['লেডিস হুডি', 'জ্যাকেট', 'সুয়েটার'],
+            'baby_collection': ['বয়েজ টি-শার্ট', 'বেবি শার্ট', 'গার্লস টিশার্ট সেট', 'বেবি বোরখা'],
+            'gents_clothing': ['গেঞ্জি+টিশার্ট', 'শার্ট কালেকশন', 'প্যান্ট+ট্রাউজার', 'পাঞ্জাবি'],
+            'ladies_clothing': ['থ্রিপিস', 'শাড়ি', 'বোরকা'],
+            'electronics': ['গেজেট ও ইলেকট্রনিক্স']
+        };
+
+        let products = JSON.parse(localStorage.getItem('shop_products')) || [];
+        let cart = JSON.parse(localStorage.getItem('shop_cart')) || [];
+        let activeModalProduct = null;
+        let selectedSize = 'M';
+        let currentMainCat = 'all';
+        let currentSubCat = 'all';
+
+        function renderSubCategories(mainCat) {
+            const container = document.getElementById('subCategoryContainer');
+            container.innerHTML = `<button onclick="filterSubCategory('all')" class="sub-cat-btn bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shadow">সকল সাব-ক্যাটাগরি</button>`;
+            
+            if(subCategoriesMap[mainCat]) {
+                subCategoriesMap[mainCat].forEach(sub => {
+                    container.innerHTML += `<button onclick="filterSubCategory('${sub}')" class="sub-cat-btn bg-white text-gray-700 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border">${sub}</button>`;
+                });
+            }
+        }
+
+        function filterMainCategory(mainCat) {
+            currentMainCat = mainCat;
+            currentSubCat = 'all';
+            document.querySelectorAll('.main-cat-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-500', 'text-white', 'shadow');
+                btn.classList.add('bg-white', 'text-gray-700', 'border');
+            });
+            event.target.classList.remove('bg-white', 'text-gray-700', 'border');
+            event.target.classList.add('bg-orange-500', 'text-white', 'shadow');
+
+            if(mainCat === 'all') {
+                document.getElementById('subCategoryContainer').innerHTML = '';
+                renderProducts(products);
+            } else {
+                renderSubCategories(mainCat);
+                renderProducts(products.filter(p => p.mainCat === mainCat));
+            }
+        }
+
+        function filterSubCategory(subCat) {
+            currentSubCat = subCat;
+            document.querySelectorAll('.sub-cat-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-100', 'text-orange-700', 'shadow');
+                btn.classList.add('bg-white', 'text-gray-700', 'border');
+            });
+            event.target.classList.remove('bg-white', 'text-gray-700', 'border');
+            event.target.classList.add('bg-orange-100', 'text-orange-700', 'shadow');
+
+            let filtered = products.filter(p => p.mainCat === currentMainCat);
+            if(subCat !== 'all') filtered = filtered.filter(p => p.subCat === subCat);
+            renderProducts(filtered);
+        }
+
+        function renderProducts(list) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            if(list.length === 0) {
+                grid.innerHTML = '<p class="text-xs text-gray-500 col-span-2 text-center py-6">কোনো পণ্য পাওয়া যায়নি!</p>';
+                return;
+            }
+            list.forEach(p => {
+                let displayImg = p.img1 || 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400';
+                grid.innerHTML += `
+                    <div onclick="openModal(${p.id})" class="bg-white rounded-xl p-2.5 shadow-sm border border-gray-100 flex flex-col justify-between cursor-pointer hover:shadow-md transition">
+                        <div>
+                            <img src="${displayImg}" alt="${p.name}" class="w-full h-32 object-cover rounded-lg mb-2">
+                            <h4 class="text-xs font-bold text-gray-800 line-clamp-1">${p.name}</h4>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-1 my-1">
+                                <span class="text-xs font-bold text-orange-600">৳${p.price}</span>
+                                <span class="text-[10px] text-gray-400 line-through">৳${p.oldPrice}</span>
+                            </div>
+                            <button class="w-full bg-orange-50 text-orange-600 hover:bg-orange-500 hover:text-white py-1 rounded text-[11px] font-bold transition">কিনুন</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterProducts() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            renderProducts(products.filter(p => p.name.toLowerCase().includes(query)));
+        }
+
+        function openModal(id) {
+            activeModalProduct = products.find(p => p.id === id);
+            document.getElementById('modalTitle').innerText = activeModalProduct.name;
+            document.getElementById('modalDesc').innerText = activeModalProduct.desc;
+            document.getElementById('modalPrice').innerText = '৳' + activeModalProduct.price;
+            document.getElementById('modalOldPrice').innerText = '৳' + activeModalProduct.oldPrice;
+
+            let imgs = [activeModalProduct.img1, activeModalProduct.img2, activeModalProduct.img3, activeModalProduct.img4].filter(Boolean);
+            document.getElementById('modalMainImg').src = imgs[0] || '';
+            
+            let thumbContainer = document.getElementById('modalThumbnails');
+            thumbContainer.innerHTML = '';
+            imgs.forEach((imgUrl) => {
+                thumbContainer.innerHTML += `<img src="${imgUrl}" onclick="document.getElementById('modalMainImg').src='${imgUrl}'" class="w-full h-12 object-cover rounded border cursor-pointer hover:border-orange-500">`;
+            });
+
+            if(activeModalProduct.hasSize) {
+                document.getElementById('modalSizeContainer').classList.remove('hidden');
+                selectSize('M');
+            } else {
+                document.getElementById('modalSizeContainer').classList.add('hidden');
+            }
+
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        function selectSize(size) {
+            selectedSize = size;
+            document.querySelectorAll('.size-btn').forEach(b => {
+                b.classList.remove('bg-orange-500', 'text-white');
+                b.classList.add('bg-white', 'text-black');
+                if(b.innerText === size) {
+                    b.classList.remove('bg-white', 'text-black');
+                    b.classList.add('bg-orange-500', 'text-white');
+                }
+            });
+        }
+
+        function closeModal() { document.getElementById('productModal').classList.add('hidden'); }
+
+        function addModalToCart() {
+            if(!activeModalProduct) return;
+            let itemSize = activeModalProduct.hasSize ? selectedSize : 'N/A';
+            const existing = cart.find(item => item.id === activeModalProduct.id && item.size === itemSize);
+            if(existing) existing.qty += 1;
+            else cart.push({...activeModalProduct, size: itemSize, qty: 1, img: activeModalProduct.img1});
+            saveCart();
+            closeModal();
+            alert('পণ্যটি কার্টে যোগ করা হয়েছে!');
+        }
+
+        function buyNowModal() { addModalToCart(); openCart(); }
+        function openCart() { renderCartItems(); document.getElementById('cartDrawer').classList.remove('hidden'); autoFillProfile(); }
+        function closeCart() { document.getElementById('cartDrawer').classList.add('hidden'); }
+
+        function renderCartItems() {
+            const list = document.getElementById('cartItemsList');
+            list.innerHTML = '';
+            if(cart.length === 0) {
+                list.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">আপনার কার্ট খালি!</p>';
+                document.getElementById('cartSubtotal').innerText = '৳০';
+                document.getElementById('cartTotal').innerText = '৳০';
+                document.getElementById('cartCount').innerText = '0';
+                return;
+            }
+
+            let subtotal = 0;
+            cart.forEach((item, index) => {
+                subtotal += item.price * item.qty;
+                list.innerHTML += `
+                    <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded-lg border">
+                        <div class="flex items-center space-x-2">
+                            <img src="${item.img}" class="w-10 h-10 object-cover rounded">
+                            <div>
+                                <h5 class="text-xs font-bold text-gray-800">${item.name}</h5>
+                                <p class="text-[10px] text-gray-500">সাইজ: ${item.size}</p>
+                                <p class="text-xs text-orange-600 font-bold">৳${item.price}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <button onclick="changeQty(${index}, -1)" class="bg-gray-200 px-1.5 py-0.5 rounded text-xs">-</button>
+                            <span class="text-xs font-bold">${item.qty}</span>
+                            <button onclick="changeQty(${index}, 1)" class="bg-gray-200 px-1.5 py-0.5 rounded text-xs">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('cartSubtotal').innerText = '৳' + subtotal;
+            updateTotal();
+            document.getElementById('cartCount').innerText = cart.reduce((acc, item) => acc + item.qty, 0);
+        }
+
+        function changeQty(index, delta) {
+            cart[index].qty += delta;
+            if(cart[index].qty <= 0) cart.splice(index, 1);
+            saveCart();
+            renderCartItems();
+        }
+
+        function updateTotal() {
+            let subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+            let delivery = parseInt(document.getElementById('deliveryArea').value);
+            document.getElementById('cartTotal').innerText = '৳' + (subtotal + (cart.length > 0 ? delivery : 0));
+        }
+
+        function saveCart() {
+            localStorage.setItem('shop_cart', JSON.stringify(cart));
+            document.getElementById('cartCount').innerText = cart.reduce((acc, item) => acc + item.qty, 0);
+        }
+
+        // Exact Format for WhatsApp Order
+        function checkoutWhatsApp() {
+            const name = document.getElementById('custName').value;
+            const phone = document.getElementById('custPhone').value;
+            const address = document.getElementById('custAddress').value;
+            const trxId = document.getElementById('trxId').value;
+            const deliveryAreaText = document.getElementById('deliveryArea').selectedOptions[0].text;
+            
+            if(!name || !phone || !address) { alert('দয়া করে নাম, ফোন নম্বর ও সম্পূর্ণ ঠিকানা দিন।'); return; }
+
+            let orderText = `*নতুন অর্ডার (শপ ঘর)*\n\n*নাম:* ${name}\n*ফোন নম্বর :* ${phone}\n*ঠিকানা: জেলা,থানা, ইউনিয়ন/গ্রাম:* ${address}\n*ডেলিভারি:* ${deliveryAreaText}\n*TrxID:* ${trxId || 'প্রযোজ্য নয়'}\n\n*অর্ডারকৃত পণ্যসমূহ:*\n--------------------------\n`;
+            
+            cart.forEach(item => {
+                orderText += `📦 *পণ্যের নাম:* ${item.name}\n🔢 *পরিমাণ:* ${item.qty}\n💰 *মূল্য:* ৳ ${item.price * item.qty}\n🖼️ *ছবি:* ${item.img}\nসাইজ: ${item.size}\n--------------------------\n`;
+            });
+            
+            let total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0) + parseInt(document.getElementById('deliveryArea').value);
+            orderText += `*মোট সর্বমোট পেমেন্ট:* ৳ ${total}`;
+
+            saveOrderToAdmin(name, phone, address, total, trxId);
+            window.open(`https://wa.me/8801787312125?text=${encodeURIComponent(orderText)}`, '_blank');
+        }
+
+        function checkoutDirect() {
+            const name = document.getElementById('custName').value;
+            const phone = document.getElementById('custPhone').value;
+            const address = document.getElementById('custAddress').value;
+            const trxId = document.getElementById('trxId').value;
+            if(!name || !phone || !address) { alert('দয়া করে নাম, ফোন নম্বর ও ঠিকানা দিন।'); return; }
+
+            let total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0) + parseInt(document.getElementById('deliveryArea').value);
+            saveOrderToAdmin(name, phone, address, total, trxId);
+            alert('আপনার অর্ডার সফলভাবে গৃহিত হয়েছে!');
+            cart = []; saveCart(); closeCart(); switchTab('orders');
+        }
+
+        function saveOrderToAdmin(name, phone, address, total, trxId) {
+            let userId = localStorage.getItem('shop_user_id') || 'USR-' + Math.floor(1000 + Math.random() * 9000);
+            localStorage.setItem('shop_user_id', userId);
+            let orders = JSON.parse(localStorage.getItem('shop_orders')) || [];
+            orders.unshift({ id: Date.now(), userId, name, phone, address, total, trxId, items: [...cart], date: new Date().toLocaleString(), status: 'Pending' });
+            localStorage.setItem('shop_orders', JSON.stringify(orders));
+        }
+
+        function switchTab(tab) {
+            document.getElementById('mainTab').classList.add('hidden');
+            document.getElementById('ordersTab').classList.add('hidden');
+            document.getElementById('profileTab').classList.add('hidden');
+            document.querySelectorAll('nav button').forEach(b => b.classList.replace('text-orange-500', 'text-gray-500'));
+
+            if(tab === 'home') { document.getElementById('mainTab').classList.remove('hidden'); document.getElementById('navHome').classList.replace('text-gray-500', 'text-orange-500'); }
+            else if(tab === 'orders') { document.getElementById('ordersTab').classList.remove('hidden'); document.getElementById('navOrders').classList.replace('text-gray-500', 'text-orange-500'); renderUserOrders(); }
+            else if(tab === 'profile') { document.getElementById('profileTab').classList.remove('hidden'); document.getElementById('navProfile').classList.replace('text-gray-500', 'text-orange-500'); loadProfile(); }
+        }
+
+        function renderUserOrders() {
+            let orders = JSON.parse(localStorage.getItem('shop_orders')) || [];
+            let uid = localStorage.getItem('shop_user_id');
+            let myOrders = orders.filter(o => o.userId === uid || !o.userId);
+            const container = document.getElementById('userOrdersList');
+            container.innerHTML = myOrders.length === 0 ? '<p class="text-xs text-gray-500 text-center py-6">কোনো অর্ডার নেই</p>' : '';
+            myOrders.forEach(o => {
+                let itemsHTML = '';
+                o.items.forEach(i => itemsHTML += `<div class="flex items-center space-x-2 my-1"><img src="${i.img}" class="w-8 h-8 object-cover rounded"><p class="text-xs font-bold">${i.name} <span class="text-orange-600">(সাইজ: ${i.size})</span> - ${i.qty}টি</p></div>`);
+                container.innerHTML += `<div class="bg-white p-3 rounded-xl shadow-sm border space-y-2"><div class="flex justify-between text-[11px] text-gray-400"><span>${o.date}</span><span class="font-bold text-amber-600">${o.status}</span></div><div>${itemsHTML}</div><div class="flex justify-between text-xs border-t pt-1"><span>TrxID: ${o.trxId || 'নেই'}</span><span class="font-bold text-orange-600">৳ ${o.total}</span></div></div>`;
+            });
+        }
+
+        function saveProfile() {
+            localStorage.setItem('shop_user_profile', JSON.stringify({ name: document.getElementById('profName').value, phone: document.getElementById('profPhone').value, email: document.getElementById('profEmail').value, address: document.getElementById('profAddress').value }));
+            alert('প্রোফাইল সেভ হয়েছে!');
+        }
+        function loadProfile() {
+            let p = JSON.parse(localStorage.getItem('shop_user_profile')) || {};
+            document.getElementById('profName').value = p.name || '';
+            document.getElementById('profPhone').value = p.phone || '';
+            document.getElementById('profEmail').value = p.email || '';
+            document.getElementById('profAddress').value = p.address || '';
+        }
+        function autoFillProfile() {
+            let p = JSON.parse(localStorage.getItem('shop_user_profile')) || {};
+            if(p.name) document.getElementById('custName').value = p.name;
+            if(p.phone) document.getElementById('custPhone').value = p.phone;
+            if(p.address) document.getElementById('custAddress').value = p.address;
+        }
+
+        renderProducts(products);
+    </script>
+</body>
+</html>
